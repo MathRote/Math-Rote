@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Rotasi Transformasi Geometri - Kelas IX</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated Math Background */
+        .math-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.1;
+        }
+
+        .math-symbol {
+            position: absolute;
+            font-size: 40px;
+            color: white;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-50px) rotate(180deg); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 50%, #FFD93D 100%);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '∠∆○□◇';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 120px;
+            opacity: 0.2;
+            transform: rotate(15deg);
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            font-weight: 700;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            padding: 20px;
+            background: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            color: #667eea;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .tab-btn:hover::before {
+            left: 100%;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .control-panel {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 3px solid #4CAF50;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 12px;
+            font-weight: 700;
+            color: #2E7D32;
+            font-size: 18px;
+        }
+
+        .shape-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .shape-btn {
+            padding: 20px;
+            background: white;
+            border: 4px solid #FFD93D;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .shape-btn:hover {
+            border-color: #FF6B6B;
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .shape-btn.selected {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+            color: white;
+            border-color: #FF6B6B;
+            transform: scale(1.05);
+        }
+
+        .rotation-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .rotation-btn {
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .rotation-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .rotation-btn:active {
+            transform: translateY(0);
+        }
+
+        .custom-rotation {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .custom-rotation input {
+            flex: 1;
+            padding: 15px;
+            border: 3px solid #FFD93D;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .custom-rotation input:focus {
+            outline: none;
+            border-color: #FF6B6B;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .canvas-container {
+            background: linear-gradient(135deg, #FFF9C4 0%, #FFECB3 100%);
+            border: 5px solid #FF8E53;
+            border-radius: 20px;
+            padding: 25px;
+            margin: 25px 0;
+            position: relative;
+            min-height: 450px;
+            box-shadow: 0 10px 30px rgba(255, 142, 83, 0.3);
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border: 3px solid #FF6B6B;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .coordinates-display {
+            background: linear-gradient(135deg, #E1F5FE 0%, #B3E5FC 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 25px;
+            border: 3px solid #03A9F4;
+        }
+
+        .coordinates-display h3 {
+            color: #01579B;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .coord-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            border-left: 5px solid #03A9F4;
+            box-shadow: 0 3px 10px rgba(3, 169, 244, 0.2);
+        }
+
+        /* AR Styles */
+        .ar-instructions {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 3px solid #FF9800;
+        }
+
+        .ar-instructions h3 {
+            color: #E65100;
+            margin-bottom: 15px;
+        }
+
+        .ar-instructions ol {
+            margin-left: 25px;
+            line-height: 2;
+            color: #333;
+        }
+
+        #startAR {
+            width: 100%;
+            padding: 25px;
+            background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 22px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.4);
+            transition: all 0.3s;
+        }
+
+        #startAR:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(76, 175, 80, 0.6);
+        }
+
+        .ar-scene-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 5px solid #4CAF50;
+            background: black;
+        }
+
+        .ar-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .ar-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .ar-controls button {
+            padding: 12px 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+
+        .ar-controls button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Quiz Styles */
+        .quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .quiz-header {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .quiz-progress {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #E0E0E0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%);
+            transition: width 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .question-card {
+            background: white;
+            padding: 35px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-left: 8px solid #FF6B6B;
+        }
+
+        .question-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 20px;
+            font-size: 20px;
+            border: 4px solid #FFD93D;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: #FF6B6B;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(76, 175, 80, 0.5);
+        }
+
+        .submit-btn:disabled {
+            background: #BDBDBD;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .feedback {
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 25px;
+            font-size: 18px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .feedback.correct {
+            background: linear-gradient(135deg, #C8E6C9 0%, #A5D6A7 100%);
+            border: 4px solid #4CAF50;
+            color: #1B5E20;
+            display: block;
+        }
+
+        .feedback.incorrect {
+            background: linear-gradient(135deg, #FFCDD2 0%, #EF9A9A 100%);
+            border: 4px solid #F44336;
+            color: #B71C1C;
+            display: block;
+        }
+
+        .correct-answer {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border-left: 5px solid #4CAF50;
+        }
+
+        .next-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+            display: none;
+        }
+
+        .next-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(255, 107, 107, 0.5);
+        }
+
+        .quiz-result {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            display: none;
+        }
+
+        .score-display {
+            font-size: 80px;
+            font-weight: 700;
+            color: #4CAF50;
+            margin: 30px 0;
+        }
+
+        .retry-btn {
+            padding: 20px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        /* Theory Styles */
+        .theory-section {
+            line-height: 2;
+        }
+
+        .theory-section h2 {
+            color: #FF6B6B;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .theory-section h3 {
+            color: #667eea;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        .formula-box {
+            background: linear-gradient(135deg, #E8EAF6 0%, #C5CAE9 100%);
+            padding: 25px;
+            border-left: 8px solid #667eea;
+            margin: 25px 0;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .formula-box p {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .example-box {
+            background: linear-gradient(135deg, #FFF9C4 0%, #FFF59D 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 25px 0;
+            border: 3px solid #FFD93D;
+            box-shadow: 0 5px 15px rgba(255, 217, 61, 0.3);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #E1F5FE 0%, #B3E5FC 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border-left: 8px solid #03A9F4;
+            box-shadow: 0 5px 15px rgba(3, 169, 244, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .tabs {
+                grid-template-columns: 1fr;
+            }
+
+            canvas {
+                max-width: 100%;
+            }
+
+            .question-text {
+                font-size: 18px;
+            }
+
+            .score-display {
+                font-size: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Math Background -->
+    <div class="math-bg" id="mathBg"></div>
+
+    <div class="container">
+        <header>
+            <h1>🔄 Rotasi Transformasi Geometri</h1>
+            <p class="subtitle">Matematika Kelas IX | Interaktif & Augmented Reality</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('materi')">📚 Materi</button>
+            <button class="tab-btn" onclick="switchTab('simulasi')">🎮 Simulasi 2D</button>
+            <button class="tab-btn" onclick="switchTab('ar')">🔮 Mode AR</button>
+            <button class="tab-btn" onclick="switchTab('kuis')">📝 Kuis</button>
+        </div>
+
+        <!-- Tab Materi -->
+        <div id="materi" class="tab-content active">
+            <div class="theory-section">
+                <h2>🔄 Rotasi dalam Transformasi Geometri</h2>
+                
+                <h3>📖 Pengertian Rotasi</h3>
+                <p>Rotasi adalah transformasi geometri yang memindahkan setiap titik pada suatu bidang dengan cara memutarnya pada sudut tertentu terhadap suatu titik pusat (pivot point). Rotasi mempertahankan bentuk dan ukuran objek, hanya mengubah posisinya.</p>
+
+                <div class="info-box">
+                    <strong>💡 Catatan Penting:</strong> Rotasi memiliki tiga komponen utama:
+                    <ul style="margin-top: 10px; margin-left: 20px;">
+                        <li>Titik pusat rotasi (biasanya titik O(0,0))</li>
+                        <li>Besar sudut rotasi (θ)</li>
+                        <li>Arah rotasi (searah atau berlawanan jarum jam)</li>
+                    </ul>
+                </div>
+
+                <h3>📐 Rumus Rotasi dengan Pusat O(0,0)</h3>
+                <div class="formula-box">
+                    <p><strong>✨ Rotasi 90° berlawanan arah jarum jam:</strong></p>
+                    <p style="font-size: 20px; margin: 10px 0;">P(x, y) → P'(-y, x)</p>
+                    
+                    <p style="margin-top: 20px;"><strong>✨ Rotasi 180°:</strong></p>
+                    <p style="font-size: 20px; margin: 10px 0;">P(x, y) → P'(-x, -y)</p>
+                    
+                    <p style="margin-top: 20px;"><strong>✨ Rotasi 270° berlawanan arah jarum jam (atau 90° searah):</strong></p>
+                    <p style="font-size: 20px; margin: 10px 0;">P(x, y) → P'(y, -x)</p>
+                    
+                    <p style="margin-top: 20px;"><strong>✨ Rotasi θ derajat (rumus umum):</strong></p>
+                    <p style="font-size: 20px; margin: 10px 0;">x' = x cos θ - y sin θ</p>
+                    <p style="font-size: 20px; margin: 10px 0;">y' = x sin θ + y cos θ</p>
+                </div>
+
+                <div class="example-box">
+                    <h4 style="color: #F57C00; font-size: 20px;">📝 Contoh Soal:</h4>
+                    <p><strong>Soal:</strong> Titik A(3, 4) dirotasi 90° berlawanan arah jarum jam dengan pusat O(0,0). Tentukan koordinat bayangan titik A!</p>
+                    
+                    <p style="margin-top: 20px;"><strong>Penyelesaian:</strong></p>
+                    <p>Diketahui: A(3, 4), rotasi 90° berlawanan arah jarum jam</p>
+                    <p>Rumus: P(x, y) → P'(-y, x)</p>
+                    <p>Maka: A(3, 4) → A'(-4, 3)</p>
+                    <p style="margin-top: 15px;"><strong style="color: #4CAF50;">✅ Jadi, koordinat bayangan titik A adalah A'(-4, 3)</strong></p>
+                </div>
+
+                <h3>🎯 Sifat-sifat Rotasi</h3>
+                <ul style="margin-left: 25px; line-height: 2.2;">
+                    <li>📏 Jarak titik ke pusat rotasi tetap (kongruen)</li>
+                    <li>📐 Besar sudut yang dibentuk dengan pusat rotasi tetap</li>
+                    <li>🔷 Bentuk dan ukuran bangun tidak berubah (isometri)</li>
+                    <li>🔄 Orientasi bangun dapat berubah</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Tab Simulasi 2D -->
+        <div id="simulasi" class="tab-content">
+            <div class="control-panel">
+                <div class="control-group">
+                    <label>1️⃣ Pilih Bentuk Geometri:</label>
+                    <div class="shape-selector">
+                        <button class="shape-btn selected" onclick="selectShape('triangle')">🔺 Segitiga</button>
+                        <button class="shape-btn" onclick="selectShape('square')">⬛ Persegi</button>
+                        <button class="shape-btn" onclick="selectShape('rectangle')">▭ Persegi Panjang</button>
+                        <button class="shape-btn" onclick="selectShape('pentagon')">⬟ Segi Lima</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>2️⃣ Pilih Sudut Rotasi:</label>
+                    <div class="rotation-controls">
+                        <button class="rotation-btn" onclick="rotate(90)">↻ 90°</button>
+                        <button class="rotation-btn" onclick="rotate(180)">↻ 180°</button>
+                        <button class="rotation-btn" onclick="rotate(270)">↻ 270°</button>
+                        <button class="rotation-btn" onclick="rotate(-90)">↺ -90°</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>3️⃣ Atau Masukkan Sudut Custom:</label>
+                    <div class="custom-rotation">
+                        <input type="number" id="customAngle" placeholder="Masukkan sudut (derajat)" value="45">
+                        <button class="rotation-btn" onclick="rotateCustom()">🚀 Rotasi!</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <button class="rotation-btn" onclick="resetRotation()" style="width: 100%; background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);">🔄 Reset</button>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="geometryCanvas" width="600" height="400"></canvas>
+            </div>
+
+            <div class="coordinates-display">
+                <h3>📊 Koordinat Titik-Titik</h3>
+                <div id="coordinatesInfo"></div>
+            </div>
+        </div>
+
+        <!-- Tab AR -->
+        <div id="ar" class="tab-content">
+            <div class="ar-instructions">
+                <h3>📱 Cara Menggunakan Mode AR:</h3>
+                <ol>
+                    <li>Klik tombol "Mulai AR" di bawah</li>
+                    <li>Izinkan akses kamera pada browser Anda</li>
+                    <li>Arahkan kamera ke marker Hiro atau permukaan datar</li>
+                    <li>Pilih bentuk geometri yang ingin ditampilkan</li>
+                    <li>Gunakan kontrol untuk merotasi objek 3D</li>
+                </ol>
+                <p style="margin-top: 15px;"><strong>📥 Download Marker Hiro:</strong> <a href="https://ar-js-org.github.io/AR.js/data/images/hiro.png" target="_blank" style="color: #FF6B6B;">Klik di sini</a> atau gunakan mode markerless</p>
+            </div>
